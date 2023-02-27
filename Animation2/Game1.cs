@@ -25,8 +25,8 @@ namespace Animation2
 
         Texture2D sheet;
         Texture2D backgroundSheet;
-        Texture2D houseSheet;
-        Texture2D pixel;
+        Texture2D firstHouseSheet;
+        Texture2D houseInterior;
         Texture2D lanternTexture;
         Texture2D secondHouseSheet;
 
@@ -42,6 +42,7 @@ namespace Animation2
 
         float houseInteriorTransparency1 = 1;
         float houseInteriorTransparency2 = 1;
+        float sceneTransparency2 = 0;
 
         
 
@@ -74,9 +75,9 @@ namespace Animation2
             backgroundSheet = Content.Load<Texture2D>("Background");
             backgroundSprite = new AnimatedSprite(backgroundSheet, 1, WIDTH_RESOLUTION, HEIGHT_RESOLUTION);
 
-            houseSheet = Content.Load<Texture2D>("HouseImage");
+            firstHouseSheet = Content.Load<Texture2D>("HouseImage");
 
-            pixel = Content.Load<Texture2D>("HouseInteriorNew");
+            houseInterior = Content.Load<Texture2D>("HouseInteriorNew");
             secondHouseSheet = Content.Load<Texture2D>("HouseImage");
 
             lanternTexture = Content.Load<Texture2D>("LanternSprite");
@@ -112,45 +113,90 @@ namespace Animation2
 
             sprite.HandleSpriteMovement(gameTime);
 
-            if (houseCollisionRectangle1.Contains(sprite.Position.X, sprite.Position.Y))
-            {
-                houseInteriorTransparency1 = 1f;
-            }
-            else
-            {
-                houseInteriorTransparency1 = 0f;
-            }
+            detectInteriorCollision();
 
-            if (houseCollisionRectangle2.Contains(sprite.Position.X, sprite.Position.Y))
-            {
-                houseInteriorTransparency2 = 1f;
-            }
-            else
-            {
-                houseInteriorTransparency2 = 0f;
-            }
+            detectLanternCollision();
 
-            if (lanternRectangle1.Contains(sprite.Position.X, sprite.Position.Y) && houseInteriorTransparency1 == 1)
-            {
-                lanternRectangle1 = Rectangle.Empty;
-            }
-
-            if (lanternRectangle2.Contains(sprite.Position.X, sprite.Position.Y))
-            {
-                lanternRectangle2 = Rectangle.Empty;
-            }
-
-            if (lanternRectangle3.Contains(sprite.Position.X, sprite.Position.Y) && houseInteriorTransparency2 == 1)
-            {
-                lanternRectangle3 = Rectangle.Empty;
-            }
-
-
+            sceneAlteration();
 
             base.Update(gameTime);
 
             base.Draw(gameTime);
         }
+
+        private void sceneAlteration()
+        {
+            //SCENE-HANDLER
+            if (sprite.Position.X <= 20)
+            {
+
+
+                if (sceneTransparency2 == 0f)
+                {
+
+                    sceneTransparency2 = 1f;
+                    sprite.Position = new Vector2(770f, sprite.Position.Y);
+                }
+                else
+                {
+                    sceneTransparency2 = 0f;
+                    sprite.Position = new Vector2(770f, sprite.Position.Y);
+                }
+            }
+            else if (sprite.Position.X >= 780)
+            {
+                if (sceneTransparency2 == 0f)
+                {
+                    sceneTransparency2 = 1f;
+                    sprite.Position = new Vector2(30f, sprite.Position.Y);
+                }
+                else
+                {
+                    sceneTransparency2 = 0f;
+                    sprite.Position = new Vector2(30f, sprite.Position.Y);
+                }
+
+            }
+        }
+
+        private void detectInteriorCollision()
+        {
+            //HOUSE-INTERIOR DISPLAY
+            if (houseCollisionRectangle1.Contains(sprite.Position.X, sprite.Position.Y))
+                houseInteriorTransparency1 = 1f;
+            else
+                houseInteriorTransparency1 = 0f;
+
+
+            if (houseCollisionRectangle2.Contains(sprite.Position.X, sprite.Position.Y))
+                houseInteriorTransparency2 = 1f;
+            else
+                houseInteriorTransparency2 = 0f;
+        }
+
+        private void detectLanternCollision()
+        {
+            //LANTERN-COLLECTION
+            if (lanternRectangle1.Contains(sprite.Position.X, sprite.Position.Y) && houseInteriorTransparency1 == 1)
+            {
+                if (sceneTransparency2 == 0f)
+                    lanternRectangle1 = Rectangle.Empty;
+            }
+
+            if (lanternRectangle2.Contains(sprite.Position.X, sprite.Position.Y))
+            {
+                if (sceneTransparency2 == 0f)
+                    lanternRectangle2 = Rectangle.Empty;
+            }
+
+            if (lanternRectangle3.Contains(sprite.Position.X, sprite.Position.Y) && houseInteriorTransparency2 == 1)
+            {
+                if (sceneTransparency2 == 0f)
+                    lanternRectangle3 = Rectangle.Empty;
+            }
+        }
+
+
 
         /// <summary>
         /// This is called when the game should draw itself.
@@ -167,29 +213,42 @@ namespace Animation2
 
             spriteBatch.Begin();
 
+
+            drawFirstSceneAssets();
+            drawSecondSceneAssets();
             
-
-            spriteBatch.Draw(backgroundSprite.Texture, backgroundSprite.Position, new Rectangle(0, 0, WIDTH_RESOLUTION*(WIDTH_RESOLUTION-backgroundSprite.SourceRect.Width), HEIGHT_RESOLUTION* (WIDTH_RESOLUTION - backgroundSprite.SourceRect.Width)), Color.White, 0f, sprite.Origin, 1.0f, SpriteEffects.None, 0);
-
-            spriteBatch.Draw(houseSheet, houseRect, Color.White);
-            spriteBatch.Draw(secondHouseSheet, secondHouseRect, Color.White);
-            spriteBatch.Draw(pixel, houseCollisionRectangle1, Color.White * houseInteriorTransparency1);
-            spriteBatch.Draw(pixel, houseCollisionRectangle2, Color.White * houseInteriorTransparency2);
-
-            spriteBatch.Draw(lanternTexture, lanternRectangle1, Color.White * houseInteriorTransparency1);
-
-            spriteBatch.Draw(lanternTexture, lanternRectangle2, Color.White);
-
-            spriteBatch.Draw(lanternTexture, lanternRectangle3, Color.White * houseInteriorTransparency2);
-
 
             spriteBatch.Draw(sprite.Texture, sprite.Position, sprite.SourceRect, Color.White, 0f,
                 sprite.Origin, 1.0f, SpriteEffects.None, 0);
+
+
 
             spriteBatch.End();
 
             base.Draw(gameTime);
 
+        }
+
+        private void drawFirstSceneAssets()
+        {
+            spriteBatch.Draw(backgroundSprite.Texture, backgroundSprite.Position, new Rectangle(0, 0, WIDTH_RESOLUTION * (WIDTH_RESOLUTION - backgroundSprite.SourceRect.Width), HEIGHT_RESOLUTION * (WIDTH_RESOLUTION - backgroundSprite.SourceRect.Width)), Color.White, 0f, sprite.Origin, 1.0f, SpriteEffects.None, 0);
+
+            spriteBatch.Draw(firstHouseSheet, houseRect, Color.White);
+            spriteBatch.Draw(secondHouseSheet, secondHouseRect, Color.White);
+            spriteBatch.Draw(houseInterior, houseCollisionRectangle1, Color.White * houseInteriorTransparency1);
+            spriteBatch.Draw(houseInterior, houseCollisionRectangle2, Color.White * houseInteriorTransparency2);
+            spriteBatch.Draw(lanternTexture, lanternRectangle1, Color.White * houseInteriorTransparency1);
+
+
+
+            spriteBatch.Draw(lanternTexture, lanternRectangle3, Color.White * houseInteriorTransparency2);
+        }
+
+        private void drawSecondSceneAssets()
+        {
+            spriteBatch.Draw(backgroundSprite.Texture, backgroundSprite.Position, new Rectangle(0, 0, WIDTH_RESOLUTION * (WIDTH_RESOLUTION - backgroundSprite.SourceRect.Width), HEIGHT_RESOLUTION * (WIDTH_RESOLUTION - backgroundSprite.SourceRect.Width)), Color.White * sceneTransparency2, 0f, sprite.Origin, 1.0f, SpriteEffects.None, 0);
+
+            spriteBatch.Draw(lanternTexture, lanternRectangle2, Color.White * sceneTransparency2);
         }
     }
 }
