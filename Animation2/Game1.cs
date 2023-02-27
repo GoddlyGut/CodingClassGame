@@ -17,19 +17,21 @@ namespace Animation2
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
+        //MANAGERS
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        
+        //ANIMATED SPRITES
         AnimatedSprite sprite;
         AnimatedSprite backgroundSprite;
-
+        //TEXTURES
         Texture2D sheet;
         Texture2D backgroundSheet;
         Texture2D firstHouseSheet;
         Texture2D houseInterior;
         Texture2D lanternTexture;
         Texture2D secondHouseSheet;
-
+        Texture2D progressBarTexture;
+        //RECTANGLES
         Rectangle lanternRectangle1 = new Rectangle(300, 300, 25, 50);
         Rectangle lanternRectangle2 = new Rectangle(450, 400, 25, 50);
         Rectangle lanternRectangle3 = new Rectangle(500, 300, 25, 50);
@@ -37,17 +39,24 @@ namespace Animation2
         Rectangle secondHouseRect = new Rectangle(475, 275, 250, 200);
         Rectangle houseCollisionRectangle1 = new Rectangle(175, 275, 250, 200);
         Rectangle houseCollisionRectangle2 = new Rectangle(475, 275, 250, 200);
-
-
-
+        //FLOATS
         float houseInteriorTransparency1 = 1;
         float houseInteriorTransparency2 = 1;
         float sceneTransparency2 = 0;
-
-        
-
+        float numberOfLanternsCollected = 0;
+        float numberOfLanterns = 3;
+        //INTS
         int WIDTH_RESOLUTION = 1920; 
         int HEIGHT_RESOLUTION = 1080;
+        int progressBarWidth = 200;
+        int progressBarHeight = 20;
+        int progressWidth = 0;
+        //COLORS
+        Color progressBarColor = Color.Green;
+        //VECTORS
+        Vector2 progressBarPosition = new Vector2(10, 10);
+
+
 
         public Game1()
         {
@@ -67,44 +76,46 @@ namespace Animation2
 
         protected override void LoadContent()
         {
-            // Create a new SpriteBatch, which can be used to draw textures.
+            //CHARACTER
             spriteBatch = new SpriteBatch(GraphicsDevice);
             sheet = Content.Load<Texture2D>("AnimationSpriteSheet");
             sprite = new AnimatedSprite(sheet, 1, 32, 48);
+            sprite.Position = new Vector2(400, 300);
 
+            //BACKGROUND
             backgroundSheet = Content.Load<Texture2D>("Background");
             backgroundSprite = new AnimatedSprite(backgroundSheet, 1, WIDTH_RESOLUTION, HEIGHT_RESOLUTION);
+            backgroundSprite.Position = new Vector2(0, 0);
 
+            //HOUSE SHEETS
             firstHouseSheet = Content.Load<Texture2D>("HouseImage");
-
-            houseInterior = Content.Load<Texture2D>("HouseInteriorNew");
             secondHouseSheet = Content.Load<Texture2D>("HouseImage");
 
+            //HOUSE INTERIOR
+            houseInterior = Content.Load<Texture2D>("HouseInteriorNew");
+            
+            //LANTERN
             lanternTexture = Content.Load<Texture2D>("LanternSprite");
 
+            //PROGRESS BAR
+            progressBarTexture = new Texture2D(GraphicsDevice, 1, 1);
+            progressBarTexture.SetData(new Color[] { Color.White });
 
-            backgroundSprite.Position = new Vector2(0, 0);
-            sprite.Position = new Vector2(400, 300);
 
             graphics.PreferredBackBufferWidth = WIDTH_RESOLUTION;
             graphics.PreferredBackBufferHeight = HEIGHT_RESOLUTION;
 
+           
+
         }
 
-        /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// all content.
-        /// </summary>
+
         protected override void UnloadContent()
         {
             // TODO: Unload any non ContentManager content here
         }
 
-        /// <summary>
-        /// Allows the game to run logic such as updating the world,
-        /// checking for collisions, gathering input, and playing audio.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+
         protected override void Update(GameTime gameTime)
         {
             // Allows the game to exit
@@ -119,9 +130,18 @@ namespace Animation2
 
             sceneAlteration();
 
+            calculateProgressBarWidth();
+
+
+
             base.Update(gameTime);
 
             base.Draw(gameTime);
+        }
+
+        private void calculateProgressBarWidth()
+        {
+            progressWidth = (int)((numberOfLanternsCollected / numberOfLanterns) * progressBarWidth);
         }
 
         private void sceneAlteration()
@@ -180,53 +200,69 @@ namespace Animation2
             if (lanternRectangle1.Contains(sprite.Position.X, sprite.Position.Y) && houseInteriorTransparency1 == 1)
             {
                 if (sceneTransparency2 == 0f)
-                    lanternRectangle1 = Rectangle.Empty;
+                {
+                    if (!lanternRectangle1.IsEmpty)
+                    {
+                        Debug.WriteLine("Collected");
+                        lanternRectangle1 = Rectangle.Empty;
+                        numberOfLanternsCollected++;
+                    }
+                }
+
+                    
+                    
             }
 
             if (lanternRectangle2.Contains(sprite.Position.X, sprite.Position.Y))
             {
-                if (sceneTransparency2 == 0f)
-                    lanternRectangle2 = Rectangle.Empty;
+                if (sceneTransparency2 == 1f)
+                    if (!lanternRectangle2.IsEmpty)
+                    {
+                        lanternRectangle2 = Rectangle.Empty;
+                        numberOfLanternsCollected++;
+                    }
             }
 
             if (lanternRectangle3.Contains(sprite.Position.X, sprite.Position.Y) && houseInteriorTransparency2 == 1)
             {
                 if (sceneTransparency2 == 0f)
-                    lanternRectangle3 = Rectangle.Empty;
+                    if (!lanternRectangle3.IsEmpty)
+                    {
+                        lanternRectangle3 = Rectangle.Empty;
+                        numberOfLanternsCollected++;
+                    }
             }
         }
 
 
-
-        /// <summary>
-        /// This is called when the game should draw itself.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            
-           
-
             GraphicsDevice.Clear(Color.Green);
             
-
-
             spriteBatch.Begin();
-
 
             drawFirstSceneAssets();
             drawSecondSceneAssets();
-            
 
-            spriteBatch.Draw(sprite.Texture, sprite.Position, sprite.SourceRect, Color.White, 0f,
-                sprite.Origin, 1.0f, SpriteEffects.None, 0);
+            drawCharacter();
 
-
+            drawProgressBar();
 
             spriteBatch.End();
 
             base.Draw(gameTime);
 
+        }
+        private void drawCharacter()
+        {
+            spriteBatch.Draw(sprite.Texture, sprite.Position, sprite.SourceRect, Color.White, 0f,
+                sprite.Origin, 1.0f, SpriteEffects.None, 0);
+        }
+
+        private void drawProgressBar()
+        {
+            spriteBatch.Draw(progressBarTexture, progressBarPosition, null, Color.Gray, 0, Vector2.Zero, new Vector2(progressBarWidth, progressBarHeight), SpriteEffects.None, 0);
+            spriteBatch.Draw(progressBarTexture, progressBarPosition, null, progressBarColor, 0, Vector2.Zero, new Vector2(progressWidth, progressBarHeight), SpriteEffects.None, 0);
         }
 
         private void drawFirstSceneAssets()
